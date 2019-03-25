@@ -5,15 +5,15 @@ require_relative "practitioner"
 # votre code
 @practitioners = []
 @communications = []
-result = {}
+totals = []
 
 def subTotal(communication)
   @doctor = @practitioners.each {|p| p if communication.id == p.id}.first
   sum = 0.1
   sum += 0.18 if communication.color == true
-  sum += ((communication.pages_number-1)*0.07)
+  pages = (communication.pages_number-1)*0.07
+  sum += pages
   sum += 0.6 if @doctor.express_delivery == true
-  sum
 end
 
 def importJSON(filepath)
@@ -27,14 +27,23 @@ def importJSON(filepath)
   end
 end
 
+def exportJSON(filepath, object)
+  File.open(filepath, 'wb') do |file|
+  file.write(JSON.generate(object))
+end
+end
+
 importJSON('level1/data.json')
 @communications.each do |com|
   date = Date.strptime(com.sent_at, '%Y-%m-%d').to_s
-    if result[date].nil?
-    result[date] = subTotal(com)
+    if totals.select{|x| x[:sent_on] == date} == []
+      totals << {
+        "sent_on": date,
+        "total": subTotal(com).round(2)
+      }
   else
-    result[date] += subTotal(com)
+    ary = totals.find{|x| x[:sent_on] == date}
+    ary[:total] += subTotal(com).round(2)
   end
 end
-
-puts result
+exportJSON('level1/output_2.json', totals)
