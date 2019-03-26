@@ -1,19 +1,22 @@
 require "json"
 require 'date'
+require 'bigdecimal'
 require_relative "communication"
 require_relative "practitioner"
 # votre code
 @practitioners = []
 @communications = []
-totals = []
+@totals = []
 
 def subTotal(communication)
   @doctor = @practitioners.each {|p| p if communication.id == p.id}.first
-  sum = 0.1
+  sum = 0.10 + BigDecimal.new("0")
   sum += 0.18 if communication.color == true
-  pages = (communication.pages_number-1)*0.07
-  sum += pages
-  sum += 0.6 if @doctor.express_delivery == true
+  pages_printed = communication.pages_number-1
+  pages_paid = pages_printed*0.07
+  sum += pages_paid
+  sum += 0.60 if @doctor.express_delivery == true
+  sum
 end
 
 def importJSON(filepath)
@@ -29,21 +32,27 @@ end
 
 def exportJSON(filepath, object)
   File.open(filepath, 'wb') do |file|
-  file.write(JSON.generate(object))
-end
-end
-
-importJSON('level1/data.json')
-@communications.each do |com|
-  date = Date.strptime(com.sent_at, '%Y-%m-%d').to_s
-    if totals.select{|x| x[:sent_on] == date} == []
-      totals << {
-        "sent_on": date,
-        "total": subTotal(com).round(2)
-      }
-  else
-    ary = totals.find{|x| x[:sent_on] == date}
-    ary[:total] += subTotal(com).round(2)
+    file.write(JSON.generate(object))
   end
 end
-exportJSON('level1/output_2.json', totals)
+
+def getTotals(communications)
+  communications.each do |com|
+    date = Date.strptime(com.sent_at, '%Y-%m-%d').to_s
+    @totals
+      if @totals.select{|x| x[:sent_on] == date} == []
+        @totals << {
+          "sent_on": date,
+          "total": subTotal(com)
+        }
+    else
+      ary = @totals.find{|x| x[:sent_on] == date}
+      ary[:total] += subTotal(com)
+    end
+  end
+  @totals
+end
+
+importJSON('data.json')
+getTotals(@communications)
+exportJSON('output_2.json', @totals)
