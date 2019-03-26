@@ -11,7 +11,9 @@ class Api::CommunicationsController < ApplicationController
   end
 
   def index
-    render json: Communication.all.to_json, status: :ok
+    @communications = Communication.all
+    # @communications = policy_scope(Communication)
+    # render json: Communication.all.to_json, status: :ok
   end
 
   def communication_params
