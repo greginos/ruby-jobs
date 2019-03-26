@@ -5,9 +5,7 @@ class Api::CommunicationsController < ApplicationController
 
     communication = Communication.new(practitioner_id: practitioner.id, sent_at: communication_params[:sent_at])
 
-    communication.save
-
-    render json: communication.to_json, status: :created
+    render json: communication, status: :created if communication.save
   end
 
   def index
